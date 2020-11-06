@@ -19,9 +19,11 @@ package inject
 
 import (
 	"context"
+	"strings"
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"github.com/vishvananda/netlink"
 	"github.com/vishvananda/netns"
 
@@ -120,7 +122,21 @@ exit:
 }
 
 func moveInterfaceToAnotherNamespace(ifName string, curNetNS, fromNetNS, toNetNS netns.NsHandle) error {
+	links, _ := netlink.LinkList()
+	linkNames := []string{}
+	for i := range links {
+		linkNames = append(linkNames, links[i].Attrs().Name)
+	}
+	logrus.Infof("> > > LINKS: %s < < <", strings.Join(linkNames, " "))
+
 	return nshandle.RunIn(curNetNS, fromNetNS, func() error {
+		links, _ := netlink.LinkList()
+		linkNames := []string{}
+		for i := range links {
+			linkNames = append(linkNames, links[i].Attrs().Name)
+		}
+		logrus.Infof("> > > LINKS: %s < < <", strings.Join(linkNames, " "))
+
 		link, err := netlink.LinkByName(ifName)
 		if err != nil {
 			return errors.Wrapf(err, "failed to get net interface: %v", ifName)
